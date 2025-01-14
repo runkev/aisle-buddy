@@ -1,11 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { Camera } from 'expo-camera';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, SectionList, TouchableOpacity, StyleSheet, Animated, Pressable } from 'react-native';
 import { list } from '../database/sampleData';
+import { Camera } from 'expo-camera';
 
 const ShoppingListScreen = ({ navigation }) => {
     // Add state for managing checked items
     const [items, setItems] = useState(list.map(item => ({ ...item, checked: false })));
+
+    const groupItemsByLocation = (item) => {
+        const groupedItems = items.reduce((acc, item) => {
+            if (!acc[item.location]) {
+                acc[item.location] = [];
+            }
+            acc[item.location].push(item);
+            return acc;
+        }, {});
+
+        return Object.keys(groupedItems).map(location => ({
+            title: location,
+            data: groupedItems[location]
+        }));
+    };
 
     const toggleItem = (itemId) => {
         setItems(items.map(item => 
@@ -16,9 +31,9 @@ const ShoppingListScreen = ({ navigation }) => {
     };
 
     const Item = ({item, onToggle, isChecked = false}) => {
-        const fadeAnim = React.useRef(new Animated.Value(isChecked ? 1 : 0)).current;
+        const fadeAnim = useRef(new Animated.Value(isChecked ? 1 : 0)).current;
 
-        React.useEffect(() => {
+        useEffect(() => {
             Animated.timing(fadeAnim, {
                 toValue: isChecked ? 1 : 0,
                 duration: 200,
@@ -27,10 +42,14 @@ const ShoppingListScreen = ({ navigation }) => {
         }, [isChecked]);
 
         return (
-            <TouchableOpacity
-                style={styles.itemContainer}
+            <Pressable
+                style={({ pressed }) => [
+                    styles.itemContainer,
+                    styles.itemShadow,
+                    pressed && styles.itemPressed,
+                    isChecked && styles.itemPressedIn
+                ]}
                 onPress={() => onToggle(item.id)}
-                activeOpacity={0.7}
             >
                 <View style={styles.checkboxContainer}>
                     <View style={styles.checkbox}>
@@ -53,7 +72,7 @@ const ShoppingListScreen = ({ navigation }) => {
                             styles.title,
                             isChecked && styles.checkedTitle
                         ]}
-                        numberOfLines={1}
+                        numberOfLines={2}
                     >
                         {item.title}
                     </Text>
@@ -64,14 +83,27 @@ const ShoppingListScreen = ({ navigation }) => {
                         </Text>
                     )}
                 </View>
-            </TouchableOpacity>
+            </Pressable>
         );
     };
 
+    // const handleScanList = async () => {
+    //     const { status } = await Camera.requestCameraPermissionsAsync();
+    //     if (status === 'granted') {
+    //         navigation.navigate('Scanner');
+    //         } else {
+    //         Alert.alert(
+    //             'Permission Required',
+    //             'Camera permission is required to use this feature',
+    //             [{ text: 'OK' }]
+    //         );
+    //     }
+    // };
+
     return (
         <View style={styles.screenContainer}>
-            <FlatList
-                data={items}
+            <SectionList
+                sections={groupItemsByLocation(items)}
                 renderItem={({item}) => (
                     <Item 
                         item={item} 
@@ -79,24 +111,36 @@ const ShoppingListScreen = ({ navigation }) => {
                         onToggle={toggleItem}
                     />
                 )}
-                keyExtractor={item => item.id}
+                renderSectionHeader={({section: {title}}) => (
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionHeaderText}>{title}</Text>
+                    </View>
+                )}
+                keyExtractor={item => item.id.toString()}
                 style={styles.list}
+                stickySectionHeadersEnabled={true}
             />
             
             <View style={styles.buttonContainer}>
-                <TouchableOpacity 
-                    style={styles.button}
+                <Pressable
+                    style={({ pressed }) => [
+                        styles.button,
+                        pressed && styles.buttonPressed
+                    ]}
                     onPress={() => navigation.navigate('Scanner')}
                 >
                     <Text style={styles.buttonText}>Scan List</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                    style={styles.button}
-                    onPress={() => navigation.navigate('AddItem')}
+                </Pressable>
+                
+                <Pressable
+                    style={({ pressed }) => [
+                        styles.button,
+                        pressed && styles.buttonPressed
+                    ]}
+                    onPress={() => navigation.navigate('Add Item')}
                 >
                     <Text style={styles.buttonText}>Add Item</Text>
-                </TouchableOpacity>
+                </Pressable>
             </View>
         </View>
     );
@@ -116,8 +160,12 @@ const styles = StyleSheet.create({
         padding: 16,
         backgroundColor: '#fff',
         borderRadius: 8,
+        borderColor: '#229fd8',
+        borderWidth: 1,
         marginVertical: 4,
         marginHorizontal: 16,
+    },
+    itemShadow: {
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -127,6 +175,33 @@ const styles = StyleSheet.create({
         shadowRadius: 1,
         elevation: 2,
     },
+    itemPressed: {
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: -1,
+        },
+        shadowOpacity: 0.15,
+        shadowRadius: 2,
+        elevation: 1,
+        backgroundColor: '#f8f8f8',
+        transform: [{ scale: 0.98 }]
+    },
+    sectionHeader: {
+        backgroundColor: '#fff',
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        marginTop: 8,
+    },
+    sectionHeaderText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#F3594D',
+        marginLeft: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
     checkboxContainer: {
         marginRight: 12,
     },
@@ -135,12 +210,12 @@ const styles = StyleSheet.create({
         height: 24,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: '#007AFF',
+        borderColor: '#F3594D',
         alignItems: 'center',
         justifyContent: 'center',
     },
     checkmark: {
-        color: '#007AFF',
+        color: '#229fd8',
         fontSize: 16,
         fontWeight: 'bold',
     },
@@ -169,23 +244,44 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-evenly',
         padding: 16,
-        backgroundColor: '#fff',
+        backgroundColor: '#F3594D',
         borderTopWidth: 1,
-        borderTopColor: '#eee',
+        borderTopColor: '#F3594D',
     },
     button: {
-        backgroundColor: '#007AFF',
+        backgroundColor: '#229fd8',
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 8,
+        borderColor: '#fff',
+        borderWidth: 1,
         minWidth: 120,
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 2,
+        elevation: 3,
+    },
+    buttonPressed: {
+        backgroundColor: '#1b86b6',
+        transform: [{ scale: 0.98 }],
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        },
+        shadowOpacity: 0.2,
+        shadowRadius: 1,
+        elevation: 1,
     },
     buttonText: {
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
-    },
+    }
 });
 
 export default ShoppingListScreen;
