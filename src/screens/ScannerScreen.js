@@ -1,7 +1,8 @@
 // ScannerScreen.js
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, Pressable } from 'react-native';
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ScannerScreen({ navigation }) {
     const [permission, requestPermission] = useCameraPermissions();
@@ -31,7 +32,6 @@ export default function ScannerScreen({ navigation }) {
             });
             
             console.log('Photo taken:', photo.uri);
-            // For testing, just log the photo URI
             Alert.alert('Success', 'Picture taken!');
             
         } catch (error) {
@@ -45,16 +45,19 @@ export default function ScannerScreen({ navigation }) {
             <CameraView 
                 style={styles.camera} 
                 facing='back'
-            >
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity 
+                ref={cameraRef}
+            >                
+            </CameraView>
+            <View style={styles.buttonContainer}>
+                    <Pressable
                         style={styles.button} 
                         onPress={takePicture}
                     >
-                        <Text style={styles.text}>Take Picture</Text>
-                    </TouchableOpacity>
+                        <View style={styles.innerCircle}>
+                            <Ionicons name="camera" size={36} style={styles.cameraLogo} />
+                        </View>
+                    </Pressable>
                 </View>
-            </CameraView>
         </View>
     );
 }
@@ -64,18 +67,17 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     camera: {
-        flex: 1,
+        flex: 6,
     },
     buttonContainer: {
         flex: 1,
-        backgroundColor: 'transparent',
+        backgroundColor: '#F3594D',
         flexDirection: 'row',
         justifyContent: 'center',
-        margin: 20,
     },
     button: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 15,
         width: 70,
         height: 70,
         borderRadius: 35,
@@ -83,8 +85,23 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    innerCircle: {
+        position: 'absolute',
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        borderWidth: 2,
+        borderColor: '#229fd8',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
     text: {
         fontSize: 16,
         color: 'black',
     },
+    cameraLogo: {
+        color: "#229fd8",
+        justifyContent: 'center',
+        alignItems: 'center'
+    }
 });
