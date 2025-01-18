@@ -3,6 +3,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, Pressable } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
+import { detectTextInImage } from '../api/cloudVision';
+
 
 export default function ScannerScreen({ navigation }) {
     const [permission, requestPermission] = useCameraPermissions();
@@ -30,15 +33,43 @@ export default function ScannerScreen({ navigation }) {
             const photo = await cameraRef.current.takePictureAsync({
                 quality: 1.0,
             });
+
+            const base64Data = await FileSystem.readAsStringAsync(photo.uri, {
+                encoding: FileSystem.EncodingType.Base64,
+            });
             
-            console.log('Photo taken:', photo.uri);
-            Alert.alert('Success', 'Picture taken!');
+            return base64Data;
             
         } catch (error) {
-            console.error('Failed to take picture:', error);
-            Alert.alert('Error', 'Failed to take picture');
+            console.error('Error capturing or converting image:', error);
+            return null;
         }
     };
+
+    const handleCapture = async () => {
+        try {
+            const base64Image = await takePicture();
+            if (base64Image) {
+                console.log('Image captured and converted successfully');
+                
+                const textResults = await detectTextInImage(base64Image);
+
+                if (textResults) {
+                    console.log('Detected Text:', textResults.text);
+                    Alert.alert('Text captured:', textResults.text);
+                }
+
+                if (!textResults) {
+                    console.log('Text not detected/captured');
+                    Alert.alert('Text not detected/captured');
+                }
+            }
+        } catch {
+            console.error('Error in capture:', error);
+            Alert.alert('Error', 'Failed to capture image');
+        }
+
+    }
 
     return (
         <View style={styles.container}>
@@ -51,7 +82,7 @@ export default function ScannerScreen({ navigation }) {
             <View style={styles.buttonContainer}>
                     <Pressable
                         style={styles.button} 
-                        onPress={takePicture}
+                        onPress={handleCapture}
                     >
                         <View style={styles.innerCircle}>
                             <Ionicons name="camera" size={36} style={styles.cameraLogo} />

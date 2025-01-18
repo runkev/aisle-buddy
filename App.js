@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ShoppingListScreen from './src/screens/ShoppingListScreen';
 import ScannerScreen from './src/screens/ScannerScreen';
 import AddItemScreen from './src/screens/AddItemScreen';
+import app from './config/firebase'
 
 const Stack = createNativeStackNavigator();
 
@@ -16,7 +17,7 @@ export default function App() {
           headerStyle: {
             backgroundColor: '#F3594D',
           },
-          headerTintColor: '#fff', // This makes the text white
+          headerTintColor: '#fff',
           headerTitleStyle: {
             fontWeight: 'bold',
           },

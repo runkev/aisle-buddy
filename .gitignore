@@ -17,6 +17,12 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Firebase config
+/config/firebase.js
+
+# Google Cloud credentials
+/config/google-cloud-vision-credentials.json
+
 # Metro
 .metro-health-check*
 
@@ -36,3 +42,5 @@ yarn-error.*
 *.tsbuildinfo
 
 .codegpt
+
+.env
